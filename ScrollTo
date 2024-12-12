@@ -1,0 +1,93 @@
+package.preload["ce.scroll_to"] = function(scrollTo)
+  ceScroll = {}
+
+  -- Recursively activates given memrec and its parents
+  local function recursive_activate(memrec)
+    if(not memrec) then return end
+    recursive_activate(memrec.Parent)
+    memrec.Active = true
+  end
+
+  -- Returns data that will be used for a search
+  local function refresh_search_list()
+    local addr_list = getAddressList()
+    local list = createStringlist()
+    list.beginUpdate()
+    for i = 0, addr_list.Count - 1 do
+      list.add(addr_list[i].Description)
+    end
+    list.endUpdate()
+    return list
+  end
+
+  -- Makes given memrec visible on screen
+  -- @param memrec MemoryRecord
+  function ceScroll:scroll_to_memrec(memrec)
+    if(not memrec) then return end
+    recursive_activate(memrec.Parent)
+    -- focus AddressList's TTreeviewWithScroll to set keyboard focus for the selected memrec
+    getAddressList().Control[0].setFocus()
+    getAddressList().setSelectedRecord(memrec)
+  end
+
+  -- Shows search dialog and tries to find memrec for typed text
+  -- @return MemoryRecord | nil
+  function ceScroll:find_memrec()
+    local addr_list = getAddressList()
+
+    if not self.description_list or self.description_list.Count ~= addr_list.Count then
+      self.description_list = refresh_search_list()
+    end
+
+    local i, text = showSelectionList(
+      "Scroll to memory record",
+      "Enter ID or description\n<Enter> selects the first element in the list",
+      self.description_list,
+      true
+    )
+    -- one of the list elements was selected
+    if i >= 0 then return addr_list[i] end
+    -- no text was typed
+    if text == '' then return end
+    local memrec
+    -- check if numeric ID was typed
+    local id = tonumber(text)
+    if(id) then
+      memrec = addr_list.getMemoryRecordByID(id)
+      if memrec then return memrec end
+    end
+    -- check if typed text is an exact description of a memrec
+    memrec = addr_list.getMemoryRecordByDescription(text)
+    if memrec then return memrec end
+    -- fallback to full list search by a partial match
+    i = self:_dumb_search(text)
+    if i then return addr_list[i] end
+  end
+
+  -- horrible, horrible search
+  -- returns index of the first memrec with description containing given text
+  -- @return Integer | nil
+  function ceScroll:_dumb_search(text)
+    text = string.lower(text)
+    for i = 0, self.description_list.Count - 1 do
+      -- plain "find substring" operation
+      if string.find(string.lower(self.description_list[i]), text, 1, true) then
+        return i
+      end
+    end
+  end
+
+
+  -- add new menu item
+  -- if can't find Edit menu item add to the main menu itself
+  local parent = getMainForm().Edit3 or getMainForm().Menu.Items
+  local new_item = createMenuItem(parent)
+  new_item.Caption = '&Scroll to'
+  new_item.Shortcut = "Ctrl+F"
+  new_item.OnClick = function() ceScroll:scroll_to_memrec(ceScroll:find_memrec()) end
+  parent.add(new_item)
+
+  return ceScroll
+end
+
+require("ce.scroll_to")
