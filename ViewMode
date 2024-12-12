@@ -1,0 +1,82 @@
+package.preload["ce.view_mode"] = function(viewMode)
+   uiMode = {}
+
+   local STANDARD_MODE = 0
+   local GAMING_MODE = 1
+   local COMPACT_MODE = 2
+
+   -- caption shows name of the next mode
+   local captions = {
+      [GAMING_MODE] = '&Gaming',
+      [COMPACT_MODE] = '&Compact',
+      [STANDARD_MODE] = '&Standart',
+   }
+
+   function uiMode:_update()
+      self.menu_item.Caption = captions[self.mode]
+      -- splitter between Scanning panel and Address list
+      MainForm.Splitter1.Visible = self.mode == STANDARD_MODE
+      -- Status bar
+      MainForm.Panel4.Visible = self.mode == STANDARD_MODE
+      -- Scanning panel
+      MainForm.Panel5.Visible = self.mode == STANDARD_MODE
+      -- Active column in Address list
+      AddressList.Header.Sections[0].Visible = self.mode == STANDARD_MODE or self.mode == COMPACT_MODE
+      -- Address column in Address list
+      AddressList.Header.Sections[2].Visible = self.mode == STANDARD_MODE or self.mode == COMPACT_MODE
+      -- Type column in Address list
+      AddressList.Header.Sections[3].Visible = self.mode == STANDARD_MODE or self.mode == COMPACT_MODE
+   end
+
+   function uiMode:cycle()
+      if self.mode == STANDARD_MODE then
+         self.mode = GAMING_MODE
+      elseif self.mode == GAMING_MODE then
+         self.mode = COMPACT_MODE
+      elseif self.mode == COMPACT_MODE then
+         self.mode = STANDARD_MODE
+      end
+      self:_update()
+   end
+
+   function uiMode:standard()
+      self.mode = STANDARD_MODE
+      self:_update()
+   end
+
+   function uiMode:gaming()
+      self.mode = GAMING_MODE
+      self:_update()
+   end
+
+   function uiMode:compact()
+      self.mode = COMPACT_MODE
+      self:_update()
+   end
+
+   function uiMode:hide()
+      self.mode = GAMING_MODE
+      self:_update()
+      self.menu_item.Visible = false
+   end
+
+   function uiMode:unhide()
+      self.mode = COMPACT_MODE
+      self:_update()
+      self.menu_item.Visible = true
+   end
+
+   local parent = getMainForm().Menu.Items
+   local menu_item = createMenuItem(parent)
+   menu_item.OnClick = function()
+      uiMode:cycle()
+   end
+   parent.add(menu_item)
+
+   uiMode.menu_item = menu_item
+   uiMode:gaming()
+   uiMode:hide()
+   return uiMode
+end
+
+require("ce.view_mode")
