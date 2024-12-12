@@ -1,0 +1,51 @@
+registerLuaFunctionHighLight('getWebInfo')
+function getWebInfo(link)
+  local bingus = getInternet('bingusNoEars')
+  local bingusWithEars = bingus.getUrl(link)
+  bingus.destroy()
+  return bingusWithEars
+end
+
+registerLuaFunctionHighLight('writeString')
+function writeString(address, argument, wchar)
+  local bytes = stringToByteTable(argument)
+  if wchar then
+    bytes = wideStringToByteTable(argument)
+    table.insert(bytes, 0)
+  end
+  table.insert(bytes, 0)
+  return writebytes(address, bytes)
+end
+
+registerLuaFunctionHighlight('inArray')
+function inArray(array, argument)
+   for i,check in pairs(array) do
+      if check == argument then
+         return true
+      end
+   end
+   return false
+end
+
+registerLuaFunctionHighlight('toHex')
+function toHex(arg)
+   local dec = tonumber(arg)
+   local hex = string.format("%x",dec)
+   return string.upper(hex)
+end
+
+registerLuaFunctionHighlight('readBit')
+function readBit(addr, bit)
+   local byte = readByte(addr)
+   if byte ~= nil then
+      return (byte & (1 << bit)) ~= 0 and 1 or 0
+   else
+      return nil
+   end
+end
+
+registerLuaFunctionHighlight('writeBit')
+function writeBit(addr_str, bit, value)
+   local addr = getAddress(addr_str)
+   writeBytes(addr + (bit >> 3), (readBytes(addr + (bit >> 3), 1) & ~(1 << (bit & 7))) | (value << (bit & 7)))
+end
