@@ -1,4 +1,4 @@
-registerLuaFunctionHighLight('getWebInfo')
+registerLuaFunctionHighlight('getWebInfo')
 function getWebInfo(link)
   local bingus = getInternet('bingusNoEars')
   local bingusWithEars = bingus.getUrl(link)
@@ -6,7 +6,7 @@ function getWebInfo(link)
   return bingusWithEars
 end
 
-registerLuaFunctionHighLight('writeString')
+registerLuaFunctionHighlight('writeString')
 function writeString(address, argument, wchar)
   local bytes = stringToByteTable(argument)
   if wchar then
